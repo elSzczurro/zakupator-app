@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "Zakupator",
+    "slug": "zakupator",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": { "image": "./assets/splash-icon.png", "resizeMode": "contain", "backgroundColor": "#06070f" },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "pl.zakupator.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Zakupator używa aparatu, żeby zeskanować przedmiot do wyceny.",
+        "NSPhotoLibraryUsageDescription": "Zakupator potrzebuje dostępu do zdjęć, żeby wycenić wybrany przedmiot."
+      }
+    },
+    "android": {
+      "package": "pl.zakupator.app",
+      "adaptiveIcon": { "foregroundImage": "./assets/adaptive-icon.png", "backgroundColor": "#06070f" },
+      "permissions": ["CAMERA"]
+    },
+    "web": { "favicon": "./assets/favicon.png" }
+  }
+}

@@ -27,3 +27,4 @@ jobs:
           tag_name: v1.0.${{ github.run_number }}
           name: Zakupator 1.0.${{ github.run_number }}
           files: zakupator.apk
+          - run: npx expo install --fix

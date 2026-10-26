@@ -1,8 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 
-const { GEMINI_API_KEY, SERPAPI_KEY, PORT = 3000 } = process.env;
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+const { GROQ_API_KEY, SERPAPI_KEY, PORT = 3000 } = process.env;
+const GROQ_MODEL = process.env.GROQ_MODEL || 'meta-llama/llama-4-scout-17b-16e-instruct';
 
 const app = express();
 app.use(cors());
@@ -43,10 +43,10 @@ app.get('/api/search', async (req, res) => {
   }
 });
 
-// SPRZEDAJ: Gemini (darmowy plan) rozpoznaje przedmiot, potem wycena z realnych ofert
+// SPRZEDAJ: Groq (darmowy plan, model z obsługą obrazu) rozpoznaje przedmiot, potem wycena z realnych ofert
 app.post('/api/valuate', async (req, res) => {
   try {
-    if (!GEMINI_API_KEY) throw new Error('Brak GEMINI_API_KEY na serwerze.');
+    if (!GROQ_API_KEY) throw new Error('Brak GROQ_API_KEY na serwerze.');
     const { image, mime = 'image/jpeg' } = req.body;
     if (!image) return res.status(400).json({ error: 'Brak zdjęcia.' });
 
@@ -55,20 +55,28 @@ app.post('/api/valuate', async (req, res) => {
       '{"name": "marka, model, wariant", "query": "krótkie zapytanie do wyszukiwarki ofert", ' +
       '"condition": "krótka ocena stanu ze zdjęcia", "condition_factor": liczba 0.3-1.0, "notes": "na co zwrócić uwagę przy sprzedaży"}';
 
-    const r = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
-      {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', 'x-goog-api-key': GEMINI_API_KEY },
-        body: JSON.stringify({
-          contents: [{ parts: [{ inline_data: { mime_type: mime, data: image } }, { text: prompt }] }],
-          generationConfig: { responseMimeType: 'application/json' },
-        }),
-      }
-    );
+    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${GROQ_API_KEY}` },
+      body: JSON.stringify({
+        model: GROQ_MODEL,
+        temperature: 0.2,
+        max_tokens: 600,
+        response_format: { type: 'json_object' },
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: prompt },
+              { type: 'image_url', image_url: { url: `data:${mime};base64,${image}` } },
+            ],
+          },
+        ],
+      }),
+    });
     const d = await r.json();
     if (!r.ok) throw new Error(d.error?.message || 'Błąd AI.');
-    const text = d.candidates?.[0]?.content?.parts?.map((p) => p.text || '').join('') || '';
+    const text = d.choices?.[0]?.message?.content || '';
     const id = JSON.parse(text.replace(/```json|```/g, '').trim());
 
     const offers = (await shopping(id.query, 30)).sort((a, b) => a.price - b.price);

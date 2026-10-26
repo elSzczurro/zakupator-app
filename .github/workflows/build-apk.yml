@@ -19,6 +19,7 @@ jobs:
           distribution: temurin
           java-version: 17
       - run: npm install
+      - run: npx expo install --fix
       - run: npx expo prebuild --platform android --no-install
       - run: cd android && chmod +x gradlew && ./gradlew assembleRelease
       - run: cp android/app/build/outputs/apk/release/app-release.apk zakupator.apk
@@ -27,4 +28,3 @@ jobs:
           tag_name: v1.0.${{ github.run_number }}
           name: Zakupator 1.0.${{ github.run_number }}
           files: zakupator.apk
-          - run: npx expo install --fix
